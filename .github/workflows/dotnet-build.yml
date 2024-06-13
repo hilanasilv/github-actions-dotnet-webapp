@@ -1,0 +1,56 @@
+name: .NET
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 * * * *' #Executa a cada hora
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3  #Action para fazer checkout do código
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v2  #Action para configurar o .NET
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: github4women 
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: github4women 
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+        working-directory: github4women 
+
+  scheduled-task:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - uses: actions/checkout@v3  
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v2  
+        with:
+          dotnet-version: 8.0.x 
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: github4women 
+      - name: Update dependencies and check for vulnerabilities
+        run: |
+          echo "Atualizando dependências e verificando vulnerabilidades"
+          dotnet list package --outdated
+          dotnet tool install --global dotnet-outdated-tool
+          dotnet outdated
+        working-directory: github4women 
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: github4women 
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+        working-directory: github4women 
